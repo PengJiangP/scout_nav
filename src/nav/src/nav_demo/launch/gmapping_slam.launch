@@ -1,0 +1,67 @@
+<launch>
+    <param name="use_sim_time" value="false"/>
+    
+    <!-- 适配SCOUT MINI公路轮底盘的gmapping配置 -->
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
+      <remap from="scan" to="scan"/>    <!-- 镭神N301激光话题 -->
+      
+      <!-- 坐标系配置 - 与公路轮底盘URDF匹配 -->
+      <param name="base_frame" value="base_link"/>      <!-- SCOUT MINI底盘坐标系 -->
+      <param name="odom_frame" value="odom"/>           <!-- 里程计坐标系 -->
+      <param name="lidar_frame" value="lslidar"/>       <!-- 镭神N301激光坐标系 -->
+      
+      <!-- ========== 新增：启用并配置里程计发布 ========== -->
+      <param name="pub_odometry" value="true"/>         <!-- 启用odom发布 -->
+      <remap from="odom" to="lidar_odom"/>              <!-- 将默认odom话题重映射为lidar_odom -->
+      <param name="tf_delay" value="0.1"/>              <!-- tf发布延迟，与激光数据同步 -->
+      
+      
+      <!-- 地图更新参数 - 平衡实时性与算力 -->
+      <param name="map_update_interval" value="0.5"/>   <!-- 公路轮移动相对稳定，适当降低更新频率 -->
+      
+      <!-- 激光雷达参数 - 镭神N301特性适配 -->
+      <param name="maxUrange" value="20.0"/>            <!-- 公路轮适合室外场景，保留更远测距 -->
+      <param name="lskip" value="1"/>                   <!-- 每2个点取1个，平衡计算量与细节（公路轮路径较规则） -->
+      
+      <!-- 扫描匹配参数 - 针对差速运动优化 -->
+      <param name="sigma" value="0.05"/>                <!-- 标准差略大，适应公路轮转向误差 -->
+      <param name="kernelSize" value="1"/>
+      <param name="lstep" value="0.05"/>                <!-- 线性步长适配公路轮移动精度 -->
+      <param name="astep" value="0.05"/>                <!-- 角度步长适配差速转向特性 -->
+      <param name="iterations" value="3"/>              <!-- 减少迭代次数，公路轮运动模型更简单 -->
+      <param name="lsigma" value="0.075"/>              <!-- 激光匹配噪声略大，容忍路面小颠簸 -->
+      <param name="ogain" value="3.0"/>                 <!-- 匹配得分权重适中 -->
+      
+      <!-- 运动模型噪声参数 - 适配四轮差速公路轮 -->
+      <param name="srr" value="0.08"/>    <!-- 旋转-旋转噪声：公路轮转向时滑动更大，增大噪声 -->
+      <param name="srt" value="0.15"/>    <!-- 旋转-平移噪声：差速转向伴随的平移误差 -->
+      <param name="str" value="0.08"/>    <!-- 平移-旋转噪声：直线运动时的旋转漂移 -->
+      <param name="stt" value="0.15"/>    <!-- 平移-平移噪声：公路轮路面不平导致的平移误差 -->
+      
+      <!-- 地图更新触发条件 - 适配公路轮运动特性 -->
+      <param name="linearUpdate" value="0.3"/>   <!-- 移动0.3米更新一次（公路轮移动更平稳，无需高频更新） -->
+      <param name="angularUpdate" value="0.3"/>  <!-- 约17度旋转更新一次（差速转向角度变化较慢） -->
+      <param name="temporalUpdate" value="0.2"/>  <!-- 与10Hz激光同步，允许稍大时间间隔 -->
+      
+      <!-- 粒子滤波参数 - 平衡精度与算力 -->
+      <param name="resampleThreshold" value="0.5"/>
+      <param name="particles" value="60"/>        <!-- 公路轮运动模型简单，减少粒子数（Orin仍有余力） -->
+      
+      <!-- 地图范围与分辨率 - 兼容AIgo T1导航 -->
+      <param name="xmin" value="-50.0"/>          <!-- 扩大初始范围，适应室外场景 -->
+      <param name="ymin" value="-50.0"/>
+      <param name="xmax" value="50.0"/>
+      <param name="ymax" value="50.0"/>
+      <param name="delta" value="0.05"/>          <!-- 5cm分辨率，兼顾精度与存储（与导航兼容） -->
+      
+      <!-- 激光采样参数 - 适配公路轮路径特性 -->
+      <param name="llsamplerange" value="0.01"/>  <!-- 线性采样范围适中 -->
+      <param name="llsamplestep" value="0.01"/>
+      <param name="lasamplerange" value="0.008"/> <!-- 角度采样范围略大，适应转向误差 -->
+      <param name="lasamplestep" value="0.008"/>
+    </node>
+      
+    <!-- 可视化配置 -->
+    <node name="rviz"  pkg="rviz"  type="rviz"  args="-d $(find nav_demo)/rviz/SLAM.rviz" />
+</launch>
+

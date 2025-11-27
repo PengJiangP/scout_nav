@@ -1,0 +1,55 @@
+<launch>
+  <!-- 适配SCOUT MINI公路轮（四轮差速）的AMCL配置 -->
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+    <!-- 坐标系配置 - 与gmapping/底盘URDF严格对齐 -->
+    <param name="base_frame_id" value="base_link"/>
+    <param name="odom_frame_id" value="odom"/>
+    <param name="global_frame_id" value="map"/>
+    
+    <!-- 激光雷达参数 - 匹配镭神N301及公路轮场景（更适合中远距离） -->
+    <param name="laser_max_range" value="20.0"/> <!-- 与gmapping的maxUrange一致（公路轮适合室外，保留更远测距） -->
+    <param name="laser_min_range" value="0.1"/>  <!-- N301最小测距（过滤近距离噪点） -->
+    <param name="laser_max_beams" value="120"/>  <!-- 公路轮路径规则，减少激光点数（平衡计算量） -->
+    <param name="laser_z_hit" value="0.9"/>      <!-- 稍降低命中概率权重（公路轮可能遇到更多动态干扰） -->
+    <param name="laser_z_short" value="0.03"/>   <!-- 降低短距离误报（硬地环境噪声少） -->
+    <param name="laser_z_max" value="0.03"/>     <!-- 降低远距离误报 -->
+    <param name="laser_z_rand" value="0.04"/>    <!-- 随机噪声容忍度略增（室外环境复杂） -->
+    <param name="laser_sigma_hit" value="0.06"/> <!-- 标准差略大（公路轮行驶震动可能导致激光轻微抖动） -->
+    <param name="laser_likelihood_max_dist" value="2.5"/> <!-- 扩大匹配距离（室外场景障碍物稀疏） -->
+    
+    <!-- 运动模型参数 - 适配四轮差速公路轮（核心修改） -->
+    <param name="odom_model_type" value="diff"/> <!-- 标准差速模型（公路轮无横向移动，无需corrected） -->
+    <param name="odom_alpha1" value="0.2"/>      <!-- 旋转时的旋转噪声（公路轮转向打滑更明显，增大值） -->
+    <param name="odom_alpha2" value="0.2"/>      <!-- 平动时的旋转噪声（差速转向伴随角度误差） -->
+    <param name="odom_alpha3" value="0.15"/>     <!-- 平移时的平移噪声（硬地行驶，误差较小） -->
+    <param name="odom_alpha4" value="0.15"/>     <!-- 旋转时的平移噪声（差速特性导致的平移误差） -->
+    <param name="odom_alpha5" value="0.0"/>      <!-- 公路轮无横向运动，关闭额外平动噪声 -->
+    <param name="transform_tolerance" value="0.3"/> <!-- 容忍时间略短（室外环境更依赖实时性） -->
+    
+    <!-- 粒子滤波参数 - 适配公路轮运动稳定性 -->
+    <param name="min_particles" value="400"/>    <!-- 减少最小粒子数（公路轮运动模型简单，收敛快） -->
+    <param name="max_particles" value="1500"/>   <!-- 减少最大粒子数（AGX Orin算力足够，避免冗余） -->
+    <param name="kld_err" value="0.05"/>         <!-- KLD误差阈值不变 -->
+    <param name="kld_z" value="0.99"/>           <!-- 置信度不变 -->
+    <param name="update_min_d" value="0.2"/>     <!-- 增大平移更新阈值（公路轮移动平稳，无需高频更新） -->
+    <param name="update_min_a" value="0.1"/>     <!-- 旋转更新阈值（适配差速转向的角度变化率） -->
+    
+    <!-- 初始位姿估计 - 适应室外大场景 -->
+    <param name="initial_pose_x" value="0.0"/>
+    <param name="initial_pose_y" value="0.0"/>
+    <param name="initial_pose_a" value="0.0"/>
+    <param name="initial_cov_xx" value="1.0*1.0"/> <!-- 扩大初始x协方差（室外场景初始定位不确定性大） -->
+    <param name="initial_cov_yy" value="1.0*1.0"/> <!-- 扩大初始y协方差 -->
+    <param name="initial_cov_aa" value="(pi/6)*(pi/6)"/> <!-- 初始角度协方差扩大到30度（室外航向不确定性高） -->
+    
+    <!-- 重采样参数 - 开启恢复机制（室外场景更易漂移） -->
+    <param name="resample_interval" value="2"/>  <!-- 延长重采样间隔（减少粒子消耗） -->
+    <param name="recovery_alpha_slow" value="0.001"/> <!-- 开启慢恢复（缓慢修正漂移） -->
+    <param name="recovery_alpha_fast" value="0.1"/>   <!-- 开启快恢复（严重漂移时快速修正） -->
+    
+    <!-- 其他参数 -->
+    <param name="gui_publish_rate" value="5.0"/>  <!-- 降低GUI发布频率（室外场景无需高频可视化） -->
+    <param name="save_pose_rate" value="1.0"/>    <!-- 降低保存频率（减少IO消耗） -->
+  </node>
+  
+</launch>

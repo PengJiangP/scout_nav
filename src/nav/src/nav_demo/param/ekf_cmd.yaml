@@ -1,0 +1,139 @@
+# ekf_cmd.yaml — 适配麦克纳姆轮底盘的EKF配置（融合IMU+里程计，预留视觉接口）
+
+# 输出频率（Hz）：匹配麦克纳姆轮快速响应特性，高于底盘控制频率（20Hz）
+frequency: 100  # 利用AGX Orin算力，提高融合频率以平滑全向运动噪声
+
+# 传感器超时时间（s）：严格控制数据延迟，适配10Hz激光和高频里程计
+sensor_timeout: 0.05  # 超时更严格，避免陈旧数据影响融合精度
+
+# 平面模式：地面机器人无需Z轴信息
+two_d_mode: true
+
+# 坐标系配置（与导航栈严格对齐）
+map_frame: map
+odom_frame: odom
+base_link_frame: base_link
+world_frame: odom  # 发布odom→base_link变换，与AMCL的map→odom形成完整坐标链
+
+# 输入话题：基础传感器+预留视觉融合接口
+odom0: /odom  # 底盘里程计（麦克纳姆轮全向运动数据）
+imu0: /imu0   # IMU数据（提供航向角和角速度）
+# visual0: /zed/odom  # 预留ZED视觉里程计接口（后续启用）
+
+# 里程计数据融合配置（核心适配麦克纳姆轮全向运动）
+# 数组含义：[x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+odom0_config:
+  - true    # x位移（融合）
+  - true    # y位移（融合，麦克纳姆轮横向移动必需）
+  - false   # z位移（忽略）
+  - false   # roll（忽略）
+  - false   # pitch（忽略）
+  - false   # yaw（不直接融合里程计yaw，避免累积漂移）
+  - true    # vx（线速度x，融合）
+  - true    # vy（线速度y，融合，麦克纳姆轮核心特性）
+  - false   # vz（忽略）
+  - false   # vroll（忽略）
+  - false   # vpitch（忽略）
+  - true    # vyaw（角速度，融合）
+  - false   # ax（忽略，里程计加速度噪声大）
+  - false   # ay（忽略）
+  - false   # az（忽略）
+
+# IMU数据融合配置（提供航向基准）
+imu0_config:
+  - false   # x（不融合IMU位置，精度低）
+  - false   # y（不融合）
+  - false   # z（忽略）
+  - false   # roll（忽略）
+  - false   # pitch（忽略）
+  - true    # yaw（融合IMU航向角，修正里程计漂移）
+  - false   # vx（不融合）
+  - false   # vy（不融合）
+  - false   # vz（忽略）
+  - false   # vroll（忽略）
+  - false   # vpitch（忽略）
+  - true    # vyaw（融合IMU角速度，平滑旋转噪声）
+  - false   # ax（忽略）
+  - false   # ay（忽略）
+  - false   # az（忽略）
+# GPS融合配置（新增：全局位置修正）
+#gps0_config:
+#  - true    # x位移（全局位置修正）
+#  - true    # y位移（全局位置修正）
+#  - false   # z
+#  - false   # roll
+#  - false   # pitch
+#  - false   # yaw（GPS航向精度低，不融合）
+#  - false   # vx（不融合GPS速度，精度低）
+#  - false   # vy
+#  - false   # vz
+#  - false   # vroll
+#  - false   # vpitch
+#  - false   # vyaw
+#  - false   # ax
+#  - false   # ay
+#  - false   # az
+
+# （预留）ZED视觉数据融合配置（启用时取消注释）
+# visual0_config:
+#   - true    # x（融合视觉位置，修正长距离漂移）
+#   - true    # y（融合视觉位置）
+#   - false   # z
+#   - false   # roll
+#   - false   # pitch
+#   - true    # yaw（视觉航向辅助）
+#   - true    # vx（融合视觉速度）
+#   - true    # vy（融合视觉速度，辅助横向运动）
+#   - false   # vz
+#   - false   # vroll
+#   - false   # vpitch
+#   - true    # vyaw（融合视觉角速度）
+#   - false   # ax
+#   - false   # ay
+#   - false   # az
+
+# 传感器噪声协方差（关键！匹配硬件实际精度）
+# 里程计噪声：麦克纳姆轮横向运动（y方向）误差通常大于x方向，协方差需差异化
+odom0_covariance: [
+  0.01, 0, 0, 0, 0, 0,          # x位移噪声（小，纵向精度高）
+  0, 0.02, 0, 0, 0, 0,          # y位移噪声（稍大，横向运动误差略高）
+  0, 0, 1e6, 0, 0, 0,           # z（忽略）
+  0, 0, 0, 1e6, 0, 0,           # roll（忽略）
+  0, 0, 0, 0, 1e6, 0,           # pitch（忽略）
+  0, 0, 0, 0, 0, 0.01,          # yaw（里程计角度噪声）
+  0, 0, 0, 0, 0, 0, 0.01, 0, 0, # vx噪声
+  0, 0, 0, 0, 0, 0, 0, 0.02, 0, # vy噪声（横向速度误差稍大）
+  0, 0, 0, 0, 0, 0, 0, 0, 1e6,  # vz（忽略）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, 0, # vroll（忽略）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, # vpitch（忽略）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.01, # vyaw噪声
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, 0, # ax（忽略）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, # ay（忽略）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6  # az（忽略）
+]
+
+# IMU噪声协方差（假设IMU为中等精度，如BNO055或类似型号）
+imu0_covariance: [
+  1e6, 0, 0, 0, 0, 0,           # x（不融合，噪声设大）
+  0, 1e6, 0, 0, 0, 0,           # y（不融合）
+  0, 0, 1e6, 0, 0, 0,           # z（不融合）
+  0, 0, 0, 1e6, 0, 0,           # roll（不融合）
+  0, 0, 0, 0, 1e6, 0,           # pitch（不融合）
+  0, 0, 0, 0, 0, 0.001,         # yaw（IMU航向角噪声，小值表示更可信）
+  0, 0, 0, 0, 0, 0, 1e6, 0, 0,  # vx（不融合）
+  0, 0, 0, 0, 0, 0, 0, 1e6, 0,  # vy（不融合）
+  0, 0, 0, 0, 0, 0, 0, 0, 1e6,  # vz（不融合）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, 0, # vroll（不融合）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, # vpitch（不融合）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, # vyaw（IMU角速度噪声，小值可信）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, 0, # ax（不融合）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6, 0, # ay（不融合）
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1e6  # az（不融合）
+]
+
+# IMU重力处理：若IMU输出包含重力加速度，需启用去除
+imu0_remove_gravitational_acceleration: true  # 通常IMU需要此设置，避免重力干扰
+
+# 坐标变换发布：匹配导航栈需求
+publish_tf: true  # 发布odom→base_link变换，与AMCL的map→odom形成完整坐标链
+publish_acceleration: false  # 无需发布加速度（导航暂不使用）

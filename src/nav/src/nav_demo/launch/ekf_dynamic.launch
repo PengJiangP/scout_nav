@@ -1,0 +1,26 @@
+<launch>
+    <!-- EKF 定位节点 -->
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" clear_params="true" output="screen">
+        <rosparam command="load" file="$(find nav_demo)/param/ekf_params_dynamic.yaml" />
+        
+        <!-- 输入话题重映射 -->
+        <remap from="odom0" to="zed2i/zed_node/odom" />
+        <remap from="imu0" to="zed2i/zed_node/imu/data" />
+        <remap from="odom1" to="lidar_odom" /> 
+        
+        <!-- 输出话题 -->
+        <remap from="odometry/filtered" to="odom_ekf" />
+        <remap from="accel/filtered" to="accel/filtered" />
+    </node>
+    
+    <!-- rqt_plot可视化位置监控 -->
+    <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_position" 
+          args="/odom_ekf/pose/pose/position/x /zed2i/zed_node/odom/pose/pose/position/x /lidar_odom/pose/pose/position/x" />
+    <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_position_y" 
+          args="/odom_ekf/pose/pose/position/y /zed2i/zed_node/odom/pose/pose/position/y /lidar_odom/pose/pose/position/y"
+          respawn="true" />
+    <!-- rqt_plot可视化速度监控 -->      
+    <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_velocity" 
+          args="/odom_ekf/twist/twist/linear/x /lidar_odom/twist/twist/linear/x" />
+
+</launch>

@@ -1,0 +1,36 @@
+local_costmap:
+  # 坐标系与范围（聚焦机器人周边）
+  global_frame: odom  # 本地规划用odom坐标系（实时性更高）
+  robot_base_frame: base_link
+  transform_tolerance: 0.3
+
+  # 地图属性（随机器人滚动，覆盖局部范围）
+  static_map: false  # 本地不依赖静态地图
+  rolling_window: true  # 随机器人移动更新范围
+  resolution: 0.05  # 与全局分辨率一致
+  width: 6.0  # 本地规划范围（6m×6m，公路轮转向需要更大提前量）
+  height: 6.0
+  origin_x: -3.0  # 原点居中
+  origin_y: -3.0
+
+  # 更新频率（本地避障需高频响应）
+  update_frequency: 15.0  # 高于全局，确保实时避障
+  publish_frequency: 10.0
+
+  # 图层配置（动态障碍+膨胀层+体素滤波）
+  plugins:
+    - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+    - {name: voxel_layer, type: "costmap_2d::VoxelLayer"}  # 过滤激光噪点
+
+  # 本地膨胀层优化（精细避障）
+  inflation_layer:
+    inflation_radius: 0.4  # 略大于机器人半径，确保转向安全
+    cost_scaling_factor: 20.0  # 近障代价衰减更快，强制远离障碍
+
+  # 体素层参数（过滤动态噪点）
+  voxel_layer:
+    z_resolution: 0.2
+    z_voxels: 2  # 仅处理0~0.4m高度的障碍（适配单线激光）
+    max_obstacle_height: 0.4
+

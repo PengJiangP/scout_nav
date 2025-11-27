@@ -1,0 +1,42 @@
+controller_frequency: 15.0  # 控制频率（Hz），与本地代价地图更新匹配
+
+TrajectoryPlannerROS:
+  # 差速驱动运动参数（公路轮无横向移动能力）
+  max_vel_x: 0.8  # 最大线速度（m/s，公路轮适合稍高速度）
+  min_vel_x: 0.1  # 最小线速度
+  max_vel_y: 0.0  # 差速驱动无横向移动，强制为0
+  min_vel_y: 0.0
+
+  max_vel_theta: 1.2  # 最大角速度（rad/s，公路轮转向速度适中）
+  min_vel_theta: -1.2
+  min_in_place_vel_theta: 0.5  # 原地旋转最小速度（差速转向需要一定速度）
+
+  # 加速度限制（公路轮硬地行驶，加速度可稍大）
+  acc_lim_x: 1.5  # 线加速度
+  acc_lim_y: 0.0  # 无横向加速度
+  acc_lim_theta: 2.0  # 角加速度
+
+  # 目标精度（公路轮定位精度适配）
+  xy_goal_tolerance: 0.15  # 位置公差（m）
+  yaw_goal_tolerance: 0.1  # 角度公差（rad，≈5.7度）
+  latch_xy_goal_tolerance: true
+
+  # 差速驱动核心配置
+  holonomic_robot: false  # 明确为非全向机器人
+  dwa: true  # 启用DWA算法（动态窗口法更适合差速避障）
+
+  # 路径权重（公路轮路径跟踪优化）
+  path_distance_bias: 3.0  # 路径跟踪权重（高于目标权重，确保沿路径行驶）
+  goal_distance_bias: 2.0  # 目标导向权重
+  occdist_scale: 0.1  # 障碍物规避权重（与激光雷达匹配）
+  meter_scoring: true  # 不受地图分辨率影响
+
+  # 轨迹采样参数（适配差速运动）
+  sim_time: 2.0  # 轨迹模拟时间（s），公路轮惯性较大，需更长预测
+  vx_samples: 10  # 线速度采样数
+  vtheta_samples: 20  # 角速度采样数（差速转向依赖角速度，采样数略多）
+  sim_granularity: 0.05  # 轨迹模拟粒度（m）
+
+  # 其他优化
+  escape_vel: -0.2  # 后退逃离速度（公路轮可后退避障）
+  publish_cost_grid_pc: false  # 关闭代价网格发布（节省算力）

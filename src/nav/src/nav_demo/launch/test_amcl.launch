@@ -1,0 +1,9 @@
+<launch>
+    <!--启动rviz-->
+
+    <!--加载地图服务-->
+    <include file="$(find nav_demo)/launch/gmapping_map_server.launch"/>
+    <!--amcl文件-->
+    <include file="$(find nav_demo)/launch/amcl_indoor.launch"/>
+
+</launch>

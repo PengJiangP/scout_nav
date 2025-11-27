@@ -1,0 +1,44 @@
+controller_frequency: 20.0  # 提高控制频率，匹配麦克纳姆轮快速响应特性（AGX Orin算力支持）
+
+TrajectoryPlannerROS:
+  # 麦克纳姆轮全向运动参数 - 关键修改
+  max_vel_x: 0.8  # 提高最大线速度（麦克纳姆轮移动更灵活）
+  min_vel_x: -0.1  # 允许后退运动
+  max_vel_y: 0.0  # 开启横向移动能力（麦克纳姆轮核心特性）
+  min_vel_y: -0.0  # 允许横向负方向移动
+
+  max_vel_theta: 1.5  # 提高最大角速度
+  min_vel_theta: -1.5
+  min_in_place_vel_theta: 0.3  # 提高原地旋转速度，适应全向特性
+
+  # 加速度参数 - 匹配麦克纳姆轮动力学特性
+  acc_lim_x: 1.5  # 线加速度适当提高
+  acc_lim_y: 1.5  # 横向加速度开启
+  acc_lim_theta: 2.0  # 角加速度提高
+
+  # 目标公差 - 提高定位精度
+  xy_goal_tolerance: 0.05  # 位置精度提高到5cm
+  yaw_goal_tolerance: 0.05  # 角度精度提高到约3度
+  latch_xy_goal_tolerance: true
+
+  # 全向机器人配置 - 核心修改点
+  holonomic_robot: false  # 明确开启全向运动模式（麦克纳姆轮关键设置）
+  dwa: true  # 启用DWA算法，更适合动态环境避障
+
+  # 路径跟随与避障权重
+  path_distance_bias: 3.0  # 提高路径跟随权重
+  goal_distance_bias: 2.0  # 目标导向权重
+  occdist_scale: 0.1  # 提高障碍物规避权重（配合镭神N301激光）
+  meter_scoring: true
+
+  # 前向模拟参数 - 优化全向运动轨迹生成
+  sim_time: 2.0  # 延长模拟时间，规划更优轨迹
+  vx_samples: 20  # 增加线速度采样数
+  vtheta_samples: 20  # 保持角速度采样数
+  sim_granularity: 0.025  # 减小模拟粒度，提高轨迹精度
+
+  # 额外优化参数
+  escape_vel: -0.1  # 后退逃离速度
+  publish_cost_grid_pc: true  # 发布代价网格，便于调试
+  global_frame_id: map  # 与AMCL和gmapping坐标系保持一致
+

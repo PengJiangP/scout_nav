@@ -1,0 +1,25 @@
+<launch>
+
+  <node pkg="laser_scan_matcher" type="laser_scan_matcher_node" 
+        name="laser_scan_matcher_node" output="screen">
+
+    <remap from="scan" to="/scan"/> 
+    
+    <remap from="imu/data" to="/imu0"/> 
+    
+    <remap from="odom" to="/laser_odom"/> 
+
+    <param name="fixed_frame" value="odom"/>      <param name="base_frame" value="base_link"/> <param name="publish_tf" value="true"/>
+    <param name="publish_covariance" value="true"/>
+    
+    <param name="use_imu" value="false"/>
+    
+    <param name="min_range" value="0.15"/>
+    <param name="max_range" value="25.0"/>
+    
+    <param name="use_cloud_input" value="false"/> <param name="keyframe_dist_linear" value="0.1"/>
+    <param name="keyframe_dist_angular" value="0.1"/>
+    
+  </node>
+
+</launch>

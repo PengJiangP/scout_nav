@@ -1,0 +1,38 @@
+local_costmap:
+  # 坐标系与范围（聚焦机器人周边近距离）
+  global_frame: odom
+  robot_base_frame: base_link
+  transform_tolerance: 0.2
+
+  # 地图属性（小范围高频更新）
+  static_map: false
+  rolling_window: true
+  resolution: 0.05
+  width: 4.0  # 4m×4m覆盖足够避障范围
+  height: 4.0
+  origin_x: -2.0
+  origin_y: -2.0
+
+  # 更新频率（室内避障需快速响应）
+  update_frequency: 20.0  # 高频更新（Hz）
+  publish_frequency: 15.0
+
+  # 图层配置（强化动态障碍检测）
+  plugins:
+    - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+    - {name: voxel_layer, type: "costmap_2d::VoxelLayer"}  # 过滤动态噪点
+
+  # 本地膨胀层（精细避障）
+  inflation_layer:
+    inflation_radius: 0.15  # 精准膨胀（贴近障碍但不碰撞） 0.3->0.15
+    cost_scaling_factor: 25.0  # 近障代价极高，强制远离
+
+  # 体素层（室内多动态障碍，强化滤波）
+  voxel_layer:
+    z_resolution: 0.1
+    z_voxels: 5  # 覆盖0~0.5m高度（桌腿、椅子等）
+    max_obstacle_height: 0.5
+    mark_threshold: 2  # 多次检测到才标记为障碍（抗噪）
+
+  obstacle_timeout: 2.0

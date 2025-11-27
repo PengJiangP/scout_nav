@@ -1,0 +1,9 @@
+<!--集成SLAM与导航，实现机器人自主移动的地图构建-->
+<launch>
+    <!-- 启动SLAM节点 -->
+    <include file="$(find nav_demo)/launch/gmapping_slam.launch" />
+    <!-- 运行move_base节点 -->
+    <include file="$(find nav_demo)/launch/move_base.launch" />
+    <!-- 运行rviz -->
+    <node pkg="rviz" type="rviz" name="nav_rviz" args="-d $(find nav_demo)/rviz/navigation.rviz" />
+</launch>

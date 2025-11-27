@@ -1,0 +1,37 @@
+global_costmap:
+  # 坐标系配置（与AMCL、gmapping保持一致）
+  global_frame: map
+  robot_base_frame: base_link
+  transform_tolerance: 0.2  # 坐标变换容忍时间（与common参数匹配）
+
+  # 地图范围与分辨率（匹配gmapping地图）
+  resolution: 0.05  # 与地图分辨率一致（0.05m/像素）
+  width: 100.0      # 覆盖范围（100m×100m，与gmapping的±50m范围匹配）
+  height: 100.0
+  origin_x: -50.0   # 原点与gmapping地图对齐
+  origin_y: -50.0
+
+  # 更新频率（全局规划无需过高频率，节省算力）
+  update_frequency: 10.0    # 全局代价地图更新频率（Hz）
+  publish_frequency: 5.0    # 发布频率（Hz）
+
+  # 全局地图特性（固定地图+静态障碍）
+  static_map: true          # 启用静态地图（来自gmapping）
+  rolling_window: false     # 全局地图固定，不随机器人移动
+  track_unknown_space: true # 追踪未知区域（便于全局路径探索）
+
+  # 图层配置（与common参数联动）
+  plugins:
+    - {name: static_layer, type: "costmap_2d::StaticLayer"}        # 静态地图层（来自gmapping）
+    - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}    # 动态障碍层（激光雷达实时更新）
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}  # 膨胀层（全局避障安全距离）
+
+  # 全局膨胀层参数（适配全局路径规划）
+  inflation_layer:
+    inflation_radius: 0.5   # 全局路径远离障碍的安全半径（比本地更大，确保宏观避障）
+    cost_scaling_factor: 5.0 # 代价衰减系数（全局路径允许更靠近障碍）
+
+  # 静态层参数（匹配gmapping输出）
+  static_layer:
+    map_topic: /map         # 订阅gmapping生成的地图话题
+    first_map_only: false   # 持续接收地图更新（建图阶段有效）

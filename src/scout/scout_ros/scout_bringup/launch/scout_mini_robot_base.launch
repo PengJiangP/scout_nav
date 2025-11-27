@@ -1,0 +1,34 @@
+<launch>
+
+    <arg name="port_name" value="can0" />
+    <arg name="simulated_robot" value="false" />
+    <arg name="model_xacro" default="$(find scout_description)/urdf/scout_v2.xacro" />
+    <arg name="odom_topic_name" default="odom" />
+    <arg name="is_scout_mini" default="true" />
+    <arg name="pub_tf" default="false" />   <!--发布odom->base_link-->
+    <!-- 启动小车 -->
+    <include file="$(find scout_base)/launch/scout_base.launch">
+        <arg name="port_name" default="$(arg port_name)" />
+        <arg name="simulated_robot" default="$(arg simulated_robot)" />
+        <arg name="odom_topic_name" default="$(arg odom_topic_name)" />
+        <arg name="is_scout_mini" default="$(arg is_scout_mini)" />
+        <arg name="pub_tf" default="$(arg pub_tf)" />
+
+    </include>
+    
+    <!-- 启动雷达 -->
+    <include file="$(find lslidar_driver)/launch/lslidar_N301.launch"/>
+    <!-- 启动雷达里程计 -->
+    <include file="$(find rf2o_laser_odometry)/launch/rf2o_laser_odometry.launch"/>
+    
+    <!-- 启动相机 -->
+    <include file="$(find zed_wrapper)/launch/zed2i.launch"/>
+    <!-- 启动卡尔曼滤波器 -->
+    <include file="$(find nav_demo)/launch/ekf_dynamic.launch"/>
+    
+    <!--  启动可视化及发布TF-->
+    <include file="$(find scout_description)/launch/display_scout_mini.launch">
+    </include> 
+    <!--启动slam建图-->
+    <!--<include file="$(find nav_demo)/launch/gmapping_slam.launch"/> -->
+</launch>

@@ -1,0 +1,42 @@
+controller_frequency: 20.0  # 与本地代价地图同步
+
+TrajectoryPlannerROS:
+  # 速度限制（室内低速安全优先）
+  max_vel_x: 0.5  # 最大线速度（m/s，低于室外）
+  min_vel_x: 0.05  # 最小蠕动速度（方便微调）
+  max_vel_y: 0.0   # 差速驱动无横向速度
+  min_vel_y: 0.0
+
+  max_vel_theta: 1.5  # 提高角速度（室内需要灵活转向）
+  min_vel_theta: -1.5
+  min_in_place_vel_theta: 0.8  # 原地旋转速度提高（狭窄空间掉头）
+
+  # 加速度限制（室内启停更平缓）
+  acc_lim_x: 1.0
+  acc_lim_y: 0.0
+  acc_lim_theta: 1.5
+
+  # 目标精度（室内定位要求更高）
+  xy_goal_tolerance: 0.1  # 10cm位置公差
+  yaw_goal_tolerance: 0.05  # 约3度角度公差
+  latch_xy_goal_tolerance: true
+
+  # 差速驱动配置
+  holonomic_robot: false
+  dwa: true  # DWA算法适合室内动态避障
+
+  # 路径权重（室内更注重避障和精度）
+  path_distance_bias: 2.5  # 路径跟踪权重
+  goal_distance_bias: 3.0  # 提高目标导向权重（优先到达终点）
+  occdist_scale: 0.2  # 提高障碍物规避权重（室内障碍多）
+  meter_scoring: true
+
+  # 轨迹采样（室内精细规划）
+  sim_time: 1.5  # 缩短模拟时间（快速响应）
+  vx_samples: 8  # 线速度采样减少（低速场景）
+  vtheta_samples: 25  # 角速度采样增加（灵活转向）
+  sim_granularity: 0.025  # 细化轨迹颗粒度
+
+  # 室内特殊优化
+  escape_vel: -0.15  # 缓慢后退（避免碰撞）
+  publish_cost_grid_pc: true  # 发布代价网格（便于调试室内避障）

@@ -1,0 +1,56 @@
+<launch>
+  <!-- 适配SCOUT MINI公路轮（四轮差速）的室内AMCL配置 -->
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+    <!-- 坐标系配置 - 与室内SLAM地图严格对齐 -->
+    <param name="base_frame_id" value="base_link"/>
+    <param name="odom_frame_id" value="odom"/>
+    <param name="global_frame_id" value="map"/>
+    
+    <!-- 激光雷达参数 - 室内短距高精度适配（镭神N301） -->
+    <param name="laser_max_range" value="8.0"/>  <!-- 室内无需远距离探测，降低至8m -->
+    <param name="laser_min_range" value="0.08"/> <!-- 允许更近探测（贴近墙壁） -->
+    <param name="laser_max_beams" value="100"/>  <!-- 减少激光点数（室内障碍密集，降低计算量） -->
+    <param name="laser_z_hit" value="0.97"/>     <!-- 提高命中概率（室内激光反射稳定） -->
+    <param name="laser_z_short" value="0.01"/>   <!-- 降低短距误报（室内无地面杂波） -->
+    <param name="laser_z_max" value="0.01"/>     <!-- 降低超量程误报 -->
+    <param name="laser_z_rand" value="0.01"/>    <!-- 降低随机噪声（室内环境稳定） -->
+    <param name="laser_sigma_hit" value="0.03"/> <!-- 减小标准差（室内定位精度要求高） -->
+    <param name="laser_likelihood_max_dist" value="1.0"/> <!-- 缩小匹配距离（室内障碍近，快速收敛） -->
+    
+    <!-- 运动模型参数 - 室内差速运动优化 -->
+    <param name="odom_model_type" value="diff"/>  <!-- 标准差速模型 -->
+    <param name="odom_alpha1" value="0.15"/>      <!-- 旋转时的旋转噪声（室内频繁转向，略增大） -->
+    <param name="odom_alpha2" value="0.15"/>      <!-- 平动时的旋转噪声（小空间转向误差） -->
+    <param name="odom_alpha3" value="0.1"/>       <!-- 平移时的平移噪声（室内低速，误差小） -->
+    <param name="odom_alpha4" value="0.1"/>       <!-- 旋转时的平移噪声 -->
+    <param name="odom_alpha5" value="0.0"/>       <!-- 无横向运动，关闭 -->
+    <param name="transform_tolerance" value="0.2"/> <!-- 缩短容忍时间（室内坐标变换需实时） -->
+    
+    <!-- 粒子滤波参数 - 室内小空间适配 -->
+    <param name="min_particles" value="300"/>     <!-- 减少粒子数（室内空间小，收敛快） -->
+    <param name="max_particles" value="1000"/>    <!-- 最大粒子数（AGX Orin算力充足，保留冗余） -->
+    <param name="kld_err" value="0.04"/>          <!-- 降低KLD误差（提高定位精度） -->
+    <param name="kld_z" value="0.99"/>            <!-- 置信度不变 -->
+    <param name="update_min_d" value="0.1"/>      <!-- 小距离更新（室内移动幅度小） -->
+    <param name="update_min_a" value="0.08"/>     <!-- 小角度更新（频繁小转向适配） -->
+    
+    <!-- 初始位姿估计 - 室内小范围定位 -->
+    <param name="initial_pose_x" value="0.0"/>
+    <param name="initial_pose_y" value="0.0"/>
+    <param name="initial_pose_a" value="0.0"/>
+    <param name="initial_cov_xx" value="0.3*0.3"/> <!-- 缩小初始x协方差（室内初始位置已知） -->
+    <param name="initial_cov_yy" value="0.3*0.3"/> <!-- 缩小初始y协方差 -->
+    <param name="initial_cov_aa" value="(pi/18)*(pi/18)"/> <!-- 初始角度协方差（10度，室内航向明确） -->
+    
+    <!-- 重采样参数 - 室内动态环境适配 -->
+    <param name="resample_interval" value="1"/>   <!-- 高频重采样（快速适应动态障碍） -->
+    <param name="recovery_alpha_slow" value="0.005"/> <!-- 增强慢恢复（缓慢修正小漂移） -->
+    <param name="recovery_alpha_fast" value="0.2"/>   <!-- 增强快恢复（应对突然遮挡） -->
+    
+    <!-- 其他参数 -->
+    <param name="gui_publish_rate" value="15.0"/> <!-- 提高GUI频率（便于室内调试） -->
+    <param name="save_pose_rate" value="2.0"/>    <!-- 提高保存频率（室内定位关键） -->
+  </node>
+  
+</launch>
+

@@ -1,0 +1,57 @@
+<launch>
+  <!-- 适配SCOUT MINI麦克纳姆轮底盘的AMCL配置 -->
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+    <!-- 坐标系配置 - 与gmapping保持一致 -->
+    <param name="base_frame_id" value="base_link"/>
+    <param name="odom_frame_id" value="odom"/>
+    <param name="global_frame_id" value="map"/>
+    
+    <!-- 激光雷达参数 - 匹配镭神N301特性 -->
+    <param name="laser_max_range" value="15.0"/> <!-- 与gmapping的maxUrange一致 -->
+    <param name="laser_min_range" value="0.1"/>  <!-- N301最小测距 -->
+    <param name="laser_max_beams" value="180"/>  <!-- 取激光点数量的一半，平衡精度与速度 -->
+    <param name="laser_z_hit" value="0.95"/>     <!-- 激光命中概率 -->
+    <param name="laser_z_short" value="0.05"/>   <!-- 激光短距离误报概率 -->
+    <param name="laser_z_max" value="0.05"/>     <!-- 激光最大距离误报概率 -->
+    <param name="laser_z_rand" value="0.05"/>    <!-- 激光随机噪声概率 -->
+    <param name="laser_sigma_hit" value="0.05"/> <!-- 激光命中标准差，与地图分辨率匹配 -->
+    <param name="laser_likelihood_max_dist" value="2.0"/> <!-- 激光匹配最大距离 -->
+    
+    <!-- 运动模型参数 - 适配麦克纳姆轮特性 -->
+    <param name="odom_model_type" value="diff"/> <!-- 修正的差分模型，更适合麦克纳姆轮 -->
+    <param name="odom_alpha1" value="0.1"/> <!-- 旋转时的旋转噪声，麦克纳姆轮精度较高 -->
+    <param name="odom_alpha2" value="0.1"/> <!-- 平动时的旋转噪声 -->
+    <param name="odom_alpha3" value="0.1"/> <!-- 旋转时的平动噪声 -->
+    <param name="odom_alpha4" value="0.1"/> <!-- 平动时的平动噪声 -->
+    <param name="odom_alpha5" value="0.05"/> <!-- 额外的平动噪声参数 -->
+    <param name="transform_tolerance" value="0.5"/> <!-- 坐标变换容忍时间 -->
+    
+    <!-- 粒子滤波参数 - 利用AGX Orin算力 -->
+    <param name="min_particles" value="500"/>    <!-- 最小粒子数 -->
+    <param name="max_particles" value="2000"/>   <!-- 最大粒子数，Orin可轻松处理 -->
+    <param name="kld_err" value="0.05"/>         <!-- KLD误差阈值 -->
+    <param name="kld_z" value="0.99"/>           <!-- KLD置信度 -->
+    <param name="update_min_d" value="0.1"/>     <!-- 最小平移更新距离（与gmapping的linearUpdate匹配） -->
+    <param name="update_min_a" value="0.05"/>    <!-- 最小旋转更新角度（比gmapping更灵敏） -->
+    
+    <!-- 初始位姿估计 -->
+    <param name="initial_pose_x" value="0.0"/>
+    <param name="initial_pose_y" value="0.0"/>
+    <param name="initial_pose_a" value="0.0"/>
+    <param name="initial_cov_xx" value="0.5*0.5"/> <!-- 初始x方向协方差 -->
+    <param name="initial_cov_yy" value="0.5*0.5"/> <!-- 初始y方向协方差 -->
+    <param name="initial_cov_aa" value="(pi/12)*(pi/12)"/> <!-- 初始角度协方差（15度） -->
+    
+    <!-- 重采样参数 -->
+    <param name="resample_interval" value="1"/>  <!-- 重采样间隔 -->
+    <param name="recovery_alpha_slow" value="0.0"/> <!-- 慢恢复权重（关闭） -->
+    <param name="recovery_alpha_fast" value="0.0"/> <!-- 快恢复权重（关闭，麦克纳姆轮定位更稳定） -->
+    
+    <!-- 其他参数 -->
+    <param name="gui_publish_rate" value="10.0"/> <!-- GUI发布频率 -->
+    <param name="save_pose_rate" value="0.5"/>   <!-- 保存位姿频率 -->
+  </node>
+  
+
+</launch>
+    

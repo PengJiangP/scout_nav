@@ -1,0 +1,28 @@
+global_costmap:
+  # 坐标系与范围（匹配gmapping地图）
+  global_frame: map
+  robot_base_frame: base_link
+  transform_tolerance: 0.3
+
+  # 地图属性（全局地图固定，覆盖大范围）
+  static_map: true  # 启用静态地图（来自gmapping）
+  rolling_window: true  # 不随机器人滚动
+  resolution: 0.05  # 与gmapping地图分辨率一致（0.05m/像素）
+  width: 100.0  # 覆盖范围（100m×100m，与gmapping的±50m匹配）
+  height: 100.0
+  origin_x: -50.0
+  origin_y: -50.0
+
+  # 更新频率（全局规划无需高频）
+  update_frequency: 5.0
+  publish_frequency: 2.0
+
+  # 图层配置（静态地图+动态障碍+膨胀层）
+  plugins:
+    - {name: static_layer, type: "costmap_2d::StaticLayer"}
+    - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+  # 全局膨胀层优化（宏观避障）
+  inflation_layer:
+    inflation_radius: 0.6  # 比本地更大，确保全局路径远离障碍

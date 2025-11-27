@@ -1,0 +1,59 @@
+# 机器人几何参数（室内场景需精确匹配底盘尺寸）
+footprint: [[-0.25, -0.2], [-0.25, 0.2], [0.25, 0.2], [0.25, -0.2]]  # 更紧凑的矩形（单位：m）
+robot_radius: 0.28  # 安全半径略大于实际尺寸（预留10%冗余）
+
+# 障碍物探测范围（室内空间小，缩短探测距离）
+obstacle_range: 5.0  # 仅处理5m内障碍物（避免远处无关物体干扰）
+raytrace_range: 5.5  # 清除5.5m外障碍物（略大于探测范围）
+
+# 障碍物高度（室内多为低矮障碍，如桌椅）
+max_obstacle_height: 0.8  # 覆盖地面到桌面高度
+min_obstacle_height: 0.03  # 过滤地面微小凸起
+
+# 坐标系与更新频率（室内需更高实时性）
+global_frame_id: map
+robot_base_frame: base_link
+update_frequency: 15.0  # 提高更新频率（Hz）
+publish_frequency: 10.0
+transform_tolerance: 0.2  # 缩短容忍时间（室内坐标变换要求更严）
+
+# 传感器配置（激光为主，ZED辅助室内视觉避障）
+observation_sources: scan zed_depth  # 启用双传感器
+
+# 镭神N301激光雷达（室内短距高精度模式）
+scan:
+  sensor_frame: lslidar
+  data_type: LaserScan
+  topic: scan
+  marking: true
+  clearing: true
+  inf_is_valid: true  # 室内无"无限远"，过滤无效点
+  laser_min_range: 0.08  # 更近的最小测距（贴近墙壁避障）
+  laser_max_range: 8.0  # 室内无需过远测距
+
+# ZED摄像头（室内视觉避障补充，解决激光盲区）
+zed_depth:
+  sensor_frame: zed_base_link
+  data_type: PointCloud2
+  topic: /zed/zed_node/point_cloud/cloud_registered
+  marking: true  # 视觉标记障碍物（如桌面、低矮物体）
+  clearing: false  # 不用于清除（避免动态物体误判）
+  min_obstacle_height: 0.1  # 检测地面以上障碍
+  max_obstacle_height: 1.5  # 覆盖人体高度
+
+# 膨胀层（室内狭窄空间适配）
+inflation_layer:
+  inflation_radius: 0.2  # 减小膨胀半径（节省空间）  0.35->0.2
+  cost_scaling_factor: 15.0  # 提高代价衰减速度（允许近距离避障）
+  inflation_radius: 0.2
+
+# 静态层（室内地图更稳定）
+static_layer:
+  map_topic: /map
+  subscribe_to_updates: false  # 室内地图固定，无需动态更新
+
+# 动态障碍层（室内动态物体多，如行人）
+obstacle_layer:
+  combination_method: 1
+  track_unknown_space: false  # 室内环境已知，无需追踪未知区域
+  obstacle_max_range: 4.0  # 动态障碍仅关注4m内

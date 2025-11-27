@@ -1,0 +1,57 @@
+# 机器人几何参数（SCOUT MINI公路轮底盘尺寸，矩形适配）
+footprint: [[-0.28, -0.22], [-0.28, 0.22], [0.28, 0.22], [0.28, -0.22]]  # 底盘实际尺寸（单位：m）
+robot_radius: 0.3  # 等效安全半径（略大于底盘半径，用于简化计算）
+
+# 障碍物探测与清除范围（匹配镭神N301）
+obstacle_range: 8.0  # 激光雷达探测障碍物的有效范围（m），小于gmapping的maxUrange（20m）
+raytrace_range: 10.0  # 清除障碍物的范围（m），确保覆盖规划所需距离
+
+# 障碍物高度阈值（单线激光适配）
+max_obstacle_height: 0.5  # 仅考虑地面以上0.5m内的障碍（公路轮多在平地行驶）
+min_obstacle_height: 0.05  # 过滤地面噪点
+
+# 坐标系与更新频率
+global_frame_id: map
+robot_base_frame: base_link
+update_frequency: 10.0  # 代价地图更新频率（Hz），公路轮无需过高
+publish_frequency: 5.0  # 代价地图发布频率（Hz）
+transform_tolerance: 0.3  # 坐标变换容忍时间（s）
+
+# 传感器配置（镭神N301激光雷达为主，预留ZED视觉接口）
+observation_sources: scan
+
+# 激光雷达参数（适配N301）
+scan:
+  sensor_frame: lslidar  # 与gmapping/AMCL坐标系一致
+  data_type: LaserScan
+  topic: scan
+  marking: true  # 用于标记障碍物
+  clearing: true  # 用于清除障碍物
+  inf_is_valid: true  # 允许"无限远"点（空旷区域）
+  laser_min_range: 0.1  # 过滤过近点
+  laser_max_range: 20.0  # 与gmapping的maxUrange一致
+
+# （可选）ZED视觉避障配置（室外强光场景补充，需配合深度点云驱动）
+# zed_depth:
+#   sensor_frame: zed_camera_link
+#   data_type: PointCloud2
+#   topic: /zed/point_cloud/cloud_registered
+#   marking: true
+#   clearing: false  # 视觉数据不用于清除障碍（避免动态物体误判）
+#   min_obstacle_height: 0.1
+#   max_obstacle_height: 1.2
+
+# 膨胀层参数（避障安全距离，适配公路轮转向半径）
+inflation_layer:
+  inflation_radius: 0.5  # 障碍物膨胀半径（公路轮转向需要更大安全距离）
+  cost_scaling_factor: 12.0  # 膨胀代价衰减系数（值越大，近障代价越高）
+
+# 静态层（加载gmapping生成的地图）
+static_layer:
+  map_topic: /map
+  subscribe_to_updates: true  # 接收地图动态更新
+
+# 动态障碍层（处理移动障碍物）
+obstacle_layer:
+  combination_method: 1  # 障碍代价叠加方式（取最大值）
+  track_unknown_space: true

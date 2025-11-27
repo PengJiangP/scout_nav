@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+
+<robot name="scout_mini" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:arg name="robot_namespace" default="/" />
+    <xacro:arg name="urdf_extras" default="empty.urdf" />
+
+    <xacro:include filename="$(find scout_description)/urdf/scout_mini_wheel.xacro" />
+
+    <!-- Variables -->
+    <xacro:property name="M_PI" value="3.14159"/>
+
+    <!-- Vehicle Geometries -->
+    <xacro:property name="base_x_size" value="0.6200000" />
+    <xacro:property name="base_y_size" value="0.585000" />
+    <xacro:property name="base_z_size" value="0.235000" />
+
+    <xacro:property name="wheelbase" value="0.463951"/>
+    <xacro:property name="track" value="0.416503"/>
+    <xacro:property name="wheel_vertical_offset" value="-0.100998" />
+
+    <xacro:property name="wheel_length" value="0.8e-01" />
+    <xacro:property name="wheel_radius" value="1.600e-01" />
+<!-- 定义材料颜色 -->
+  <material name="black">
+    <color rgba="0.0 0.0 0.0 1.0"/> <!-- 黑色 -->
+  </material>
+
+  <material name="silver">
+    <color rgba="0.75 0.75 0.75 1.0"/> <!-- 银白色 -->
+  </material>s
+  
+    <!-- Base link原来 rpy="1.5707 0 -1.5707" /> -->
+    <link name="base_link">
+        <visual>
+            <origin
+                    xyz="0 0 0"
+                    rpy="1.5707 0 -1.5707" />
+            <geometry>
+                <mesh filename="package://scout_description/meshes/scout_mini_base_link.dae" />
+            </geometry>
+        </visual>
+        <!--<collision>
+            <origin
+                    xyz="0 0 0"
+                    rpy="1.5707 0 -1.5707" />
+          <geometry>
+            <mesh
+              filename="package://scout_description/meshes/scout_mini_base_link.dae" />
+          </geometry>
+        </collision>-->
+    </link>
+
+    <link name="inertial_link">
+        <inertial>
+            <mass value="60" />
+            <origin xyz="0.0 0.0 0.0" />
+            <inertia ixx="2.288641" ixy="0" ixz="0" iyy="5.103976" iyz="0" izz="3.431465" />
+        </inertial>
+    </link>
+<!-- 雷达描述-->
+  <link name="laser_link">
+    <visual>
+      <origin xyz="0 0 -0.025" />
+      <geometry>
+        <cylinder length="0.075" radius="0.036" />
+      </geometry>
+      <material name="black" />
+    </visual>
+  </link>
+ <!-- IMU描述--> 
+    <link name="IMU_link">
+    <visual>
+      <origin xyz="-0.03 -0.02 0.002" />
+      <geometry>
+        <box size="0.15 0.13 0.04" />
+      </geometry>
+      <material name="silver" />
+    </visual>
+  </link>
+
+  
+    <joint name="inertial_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="inertial_link" />
+    </joint>
+
+    <!-- Scout wheel macros -->
+    <!-- wheel labeled from 0 to 3, conter-clockwise, starting from front right wheel -->
+    <!-- motor 1 and 2 (left side) are mechanically installed in a reversed direction -->
+    <xacro:scout_mini_wheel wheel_prefix="front_right">
+        <origin xyz="${wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="1.57 0 0" />
+    </xacro:scout_mini_wheel>
+    <xacro:scout_mini_wheel wheel_prefix="front_left">
+        <origin xyz="${wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="-1.57 0 0" />
+    </xacro:scout_mini_wheel>
+    <xacro:scout_mini_wheel wheel_prefix="rear_left">
+        <origin xyz="${-wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="-1.57 0 0" />
+    </xacro:scout_mini_wheel>
+    <xacro:scout_mini_wheel wheel_prefix="rear_right">
+        <origin xyz="${-wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="1.57 0 0" />
+    </xacro:scout_mini_wheel>
+
+    <link name="front_mount" />
+
+    <joint name="front_mount_joint" type="fixed">
+        <origin xyz="0.175 0 0.068999" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="front_mount" />
+    </joint>
+
+    <link name="rear_mount" />
+
+    <joint name="rear_mount_joint" type="fixed">
+        <origin xyz="-0.175 0 0.068999" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="rear_mount" />
+    </joint>
+
+    <!-- Additional definitions -->
+    <xacro:include filename="$(arg urdf_extras)" />
+
+    <!-- 雷达坐标系 原本为rpy="0 0 0" /> -->
+    
+    <joint name="lslidar_joint" type="fixed">
+        <origin xyz="-0.011 0.0035 0.451" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="laser_link" />
+    </joint>
+    
+    <!-- 相机的变换已经ZED ros中发布-->
+
+     <!-- IMU坐标系原本为 rpy="3.14159 0 0" IMU X轴朝前，Y轴朝右，Z轴朝下/>-->
+    
+    <joint name="IMU_link_joint" type="fixed">
+        <origin xyz="0.151 -0.024 0.213" rpy="3.14159 0 0" />
+        <parent link="base_link" />
+        <child link="IMU_link" />
+    </joint>
+    <!-- 仿真Gazebo definitions  -->
+    <!--<xacro:include filename="$(find scout_description)/urdf/scout_mini.gazebo" />-->
+</robot>
